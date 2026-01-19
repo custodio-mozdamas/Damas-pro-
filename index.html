@@ -81,7 +81,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    // DADOS COPIADOS DA SUA IMAGEM
+    // Credenciais do teu Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyCYv_obSjs7x7hLx8p1IANOWMI5G6OmpGo",
         authDomain: "damas-pro-cf92b.firebaseapp.com",
@@ -103,7 +103,6 @@
     let legalMoves = [];
     let gameActive = false;
 
-    // --- Inicialização ---
     function initUI() {
         const boardEl = document.getElementById('board');
         boardEl.innerHTML = '';
@@ -118,7 +117,6 @@
         }
     }
 
-    // --- Sincronização com Firebase ---
     onValue(gameRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {
@@ -134,25 +132,18 @@
     });
 
     window.iniciarPartida = function() {
-        let newBoard = [];
+        let newBoard = Array(8).fill().map(() => Array(8).fill(null));
         for (let r = 0; r < 8; r++) {
-            newBoard[r] = [];
             for (let c = 0; c < 8; c++) {
-                newBoard[r][c] = (r+c)%2===0 ? (r<3?{color:'black',king:false}:(r>4?{color:'white',king:false}:null)) : null;
+                if((r+c)%2===0) {
+                    if(r<3) newBoard[r][c] = {color:'black',king:false};
+                    if(r>4) newBoard[r][c] = {color:'white',king:false};
+                }
             }
         }
-        set(gameRef, {
-            board: newBoard,
-            turn: 'white',
-            gameActive: true
-        });
+        set(gameRef, { board: newBoard, turn: 'white', gameActive: true });
     };
 
-    function enviarMovimento() {
-        set(gameRef, { board, turn, gameActive });
-    }
-
-    // --- Lógica do Jogo ---
     function handleClick(r, c) {
         if (!gameActive) return;
         if (board[r][c]?.color === turn) {
@@ -164,13 +155,10 @@
                 board[move.tr][move.tc] = p;
                 board[move.fr][move.fc] = null;
                 if (move.victim) board[move.victim.r][move.victim.c] = null;
-                
-                // Promoção a Dama
                 if (!p.king && ((p.color === 'white' && move.tr === 0) || (p.color === 'black' && move.tr === 7))) p.king = true;
-                
                 turn = turn === 'white' ? 'black' : 'white';
                 selectedSq = null;
-                enviarMovimento();
+                set(gameRef, { board, turn, gameActive });
             }
         }
         render();
@@ -183,15 +171,12 @@
                 if (board[r] && board[r][c]?.color === turn) {
                     const dirs = [[1,1],[1,-1],[-1,1],[-1,-1]];
                     dirs.forEach(d => {
-                        // Movimento simples
                         let nr = r + d[0], nc = c + d[1];
                         if (nr>=0 && nr<8 && nc>=0 && nc<8 && !board[nr][nc]) {
-                            // Só permite avançar se não for dama
                             if (board[r][c].king || (turn === 'white' && d[0] < 0) || (turn === 'black' && d[0] > 0)) {
                                 legalMoves.push({ fr: r, fc: c, tr: nr, tc: nc });
                             }
                         }
-                        // Captura
                         let cr = r + d[0]*2, cc = c + d[1]*2;
                         if (cr>=0 && cr<8 && cc>=0 && cc<8 && !board[cr][cc] && board[nr][nc] && board[nr][nc].color !== turn) {
                             legalMoves.push({ fr: r, fc: c, tr: cr, tc: cc, victim: {r:nr, c:nc} });
@@ -204,11 +189,11 @@
 
     function render() {
         let wCount = 0, bCount = 0;
+        initUI(); // Garante que os IDs dos quadrados existam
         for (let r = 0; r < 8; r++) {
             for (let c = 0; c < 8; c++) {
                 const sq = document.getElementById(`sq-${r}-${c}`);
                 if (!sq) continue;
-                sq.innerHTML = '';
                 const p = board[r][c];
                 if (p) {
                     p.color === 'white' ? wCount++ : bCount++;
