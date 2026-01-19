@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Damas Pro Master - Firebase Edition</title>
+    <title>Damas Pro Master - Firebase Fixed</title>
     <style>
         :root {
             --bg: #1a1a1a;
@@ -30,36 +30,33 @@
         .hud-top { display: flex; justify-content: space-between; font-size: 10px; color: #888; margin-bottom: 2px; font-weight: bold; }
         
         #board-wrapper { flex: 1; display: flex; align-items: center; justify-content: center; padding: 10px; position: relative; }
-        #board { width: min(90vw, 450px); height: min(90vw, 450px); display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); border: 4px solid #333; position: relative; transition: transform 0.5s ease; }
+        #board { width: min(90vw, 450px); height: min(90vw, 450px); display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); border: 4px solid #333; position: relative; }
 
-        #lobby-overlay, #game-over-overlay, #draw-overlay { 
+        #lobby-overlay, #game-over-overlay { 
             position: absolute; inset: 0; background: rgba(0,0,0,0.95); z-index: 100; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;
         }
         .hidden { display: none !important; }
 
         .modal-title { font-size: 2rem; color: var(--accent); margin-bottom: 10px; }
-        .modal-msg { color: #ccc; margin-bottom: 25px; font-size: 1.1rem; max-width: 80%; }
-
         .square { width: 100%; height: 100%; position: relative; display: flex; justify-content: center; align-items: center; }
         .dark-sq { background-color: var(--board-dark); }
         .light-sq { background-color: var(--board-light); }
-        .piece { position: absolute; width: 80%; height: 80%; border-radius: 50%; z-index: 2; box-shadow: 0 4px 4px rgba(0,0,0,0.4); pointer-events: none; transform: rotate(var(--piece-rotation, 0deg)); transition: transform 0.3s ease; }
+        .piece { position: absolute; width: 85%; height: 85%; border-radius: 50%; z-index: 2; box-shadow: 0 4px 4px rgba(0,0,0,0.4); pointer-events: none; }
         .white { background: var(--white-p); border: 1px solid #999; }
         .black { background: var(--black-p); border: 1px solid #333; }
-        .king::after { content: '👑'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: min(4vw, 20px); }
-        .selected { transform: scale(1.1) rotate(var(--piece-rotation, 0deg)); outline: 4px solid #f1c40f; z-index: 10; }
+        .king::after { content: '👑'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 20px; }
+        .selected { outline: 4px solid #f1c40f; z-index: 10; }
         .hint { position: absolute; width: 35%; height: 35%; background: rgba(0, 255, 0, 0.4); border-radius: 50%; z-index: 1; }
 
-        #side-menu { position: fixed; top: 0; right: -280px; width: 280px; height: 100%; background: var(--panel); box-shadow: -5px 0 15px rgba(0,0,0,0.5); transition: 0.3s; z-index: 1000; padding: 20px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+        #side-menu { position: fixed; top: 0; right: -280px; width: 280px; height: 100%; background: var(--panel); box-shadow: -5px 0 15px rgba(0,0,0,0.5); transition: 0.3s; z-index: 1000; padding: 20px; }
         #side-menu.open { right: 0; }
         #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; z-index: 999; }
 
         .timer { font-family: monospace; font-size: 1.6rem; background: #000; padding: 5px; text-align: center; border-radius: 4px; color: #444; border: 2px solid #333; }
         .timer.active { color: var(--accent); border-color: var(--accent); }
-        #status-bar { grid-column: span 2; text-align: center; color: #f1c40f; font-weight: bold; font-size: 0.9rem; margin-top: 5px; }
-        .menu-btn { width: 100%; padding: 10px; background: #333; border: 1px solid #444; color: white; cursor: pointer; text-align: left; border-radius: 4px; font-weight: bold; }
-        .btn-start { background: var(--accent); color: black; text-align: center; margin-top: 15px; }
+        #status-bar { grid-column: span 2; text-align: center; color: #f1c40f; font-weight: bold; font-size: 0.9rem; }
+        .menu-btn { width: 100%; padding: 12px; background: var(--accent); color: black; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -67,41 +64,34 @@
     <div id="overlay" onclick="toggleMenu()"></div>
 
     <div id="top-bar">
-        <div id="host-name" style="font-weight: bold; color: var(--accent);">👑 CARREGANDO...</div>
+        <div id="host-name" style="font-weight: bold; color: var(--accent);">SALA ONLINE</div>
         <div class="viewer-count"><span class="dot"></span> Online</div>
         <div onclick="toggleMenu()" style="cursor:pointer; font-size: 24px;">⋮</div>
     </div>
 
     <div id="game-info">
         <div>
-            <div class="hud-top"><span>PRETAS</span> <span id="count-black">12</span></div>
+            <div class="hud-top">PRETAS <span id="count-black">12</span></div>
             <div id="timer-black" class="timer">05:00</div>
         </div>
         <div>
-            <div class="hud-top"><span>BRANCAS</span> <span id="count-white">12</span></div>
+            <div class="hud-top">BRANCAS <span id="count-white">12</span></div>
             <div id="timer-white" class="timer active">05:00</div>
         </div>
-        <div id="status-bar">SINCRONIZANDO...</div>
+        <div id="status-bar">CONECTANDO...</div>
     </div>
 
     <div id="board-wrapper">
         <div id="lobby-overlay">
             <h2 class="modal-title">SALA DE ESPERA</h2>
-            <button id="start-btn" class="menu-btn btn-start" onclick="iniciarPartidaFirebase()" style="width:200px">INICIAR PARTIDA</button>
+            <button class="menu-btn" onclick="iniciarPartida()">INICIAR JOGO</button>
         </div>
-
-        <div id="game-over-overlay" class="hidden">
-            <h2 id="game-over-title" class="modal-title">FIM DE JOGO</h2>
-            <p id="game-over-msg" class="modal-msg"></p>
-            <button class="menu-btn btn-start" onclick="resetarJogoFirebase()" style="width:200px">JOGAR NOVAMENTE</button>
-        </div>
-
         <div id="board"></div>
     </div>
 
     <div id="side-menu">
-        <h3 style="margin: 0; border-bottom: 1px solid #444; padding-bottom: 10px;">Opções</h3>
-        <button class="menu-btn" onclick="resetarJogoFirebase()" style="margin-top:10px; background:#c0392b; border:none; text-align:center;">REINICIAR TUDO</button>
+        <h3 style="color:white">Menu</h3>
+        <button class="menu-btn" style="background:var(--danger); color:white" onclick="resetarTudo()">REINICIAR TUDO</button>
     </div>
 
 <script type="module">
@@ -126,165 +116,83 @@
     let turn = 'white';
     let selectedSq = null;
     let legalMoves = [];
-    let inMultiCapture = false;
-    let timers = { white: 300, black: 300 };
     let gameActive = false;
     let gameStarted = false;
 
-    // --- LÓGICA DE MOVIMENTO (DO SEU CÓDIGO) ---
+    // --- FUNÇÕES EXPOSTAS AO WINDOW PARA O HTML ENCONTRAR ---
+    window.iniciarPartida = () => update(gameRef, { gameStarted: true, gameActive: true });
+    window.resetarTudo = () => { set(gameRef, null); location.reload(); };
+    window.toggleMenu = () => {
+        const m = document.getElementById('side-menu');
+        const o = document.getElementById('overlay');
+        m.classList.toggle('open');
+        o.style.display = m.classList.contains('open') ? 'block' : 'none';
+    };
 
-    function getBestCaptures(r, c, b, depth = 0) {
-        const p = b[r][c]; if(!p) return [];
-        let moves = []; const dirs = [[1,1],[1,-1],[-1,1],[-1,-1]];
-        const range = p.king ? 7 : 1;
-        dirs.forEach(d => {
-            for (let i = 1; i <= range; i++) {
-                let vr = r + d[0]*i, vc = c + d[1]*i;
-                if (vr < 0 || vr >= 8 || vc < 0 || vc >= 8) break;
-                if (b[vr][vc]) {
-                    if (b[vr][vc].color === p.color) break;
-                    let lr = vr + d[0], lc = vc + d[1];
-                    while (lr >= 0 && lr < 8 && lc >= 0 && lc < 8 && !b[lr][lc]) {
-                        const nextB = b.map(row => row.map(cell => cell ? {...cell} : null));
-                        nextB[lr][lc] = {...p}; nextB[r][c] = null; nextB[vr][vc] = null;
-                        const sub = getBestCaptures(lr, lc, nextB, depth + 1);
-                        if (sub.length > 0) sub.forEach(sm => moves.push({ fr: r, fc: c, tr: lr, tc: lc, victim: {r:vr, c:vc}, totalCount: sm.totalCount }));
-                        else moves.push({ fr: r, fc: c, tr: lr, tc: lc, victim: {r:vr, c:vc}, totalCount: depth + 1 });
-                        if (!p.king) break;
-                        lr += d[0]; lc += d[1];
-                    }
-                    break;
-                }
+    window.handleClick = (r, c) => {
+        if (!gameActive) return;
+        const p = board[r][c];
+        if (p?.color === turn) {
+            selectedSq = { r, c };
+        } else if (selectedSq) {
+            const move = legalMoves.find(m => m.fr === selectedSq.r && m.fc === selectedSq.c && m.tr === r && m.tc === c);
+            if (move) {
+                // Executar movimento
+                board[move.tr][move.tc] = board[move.fr][move.fc];
+                board[move.fr][move.fc] = null;
+                if (move.victim) board[move.victim.r][move.victim.c] = null;
+                
+                // Coroação
+                const piece = board[move.tr][move.tc];
+                if (!piece.king && ((piece.color === 'white' && move.tr === 0) || (piece.color === 'black' && move.tr === 7))) piece.king = true;
+
+                turn = turn === 'white' ? 'black' : 'white';
+                selectedSq = null;
+                update(gameRef, { board, turn });
+            } else {
+                selectedSq = null;
             }
-        });
-        return moves;
-    }
+        }
+        render();
+    };
 
-    function getSimpleMoves() {
-        let moves = [];
+    // --- LÓGICA DE JOGO ---
+    function updateLogic() {
+        let caps = [];
+        let normals = [];
         for (let r = 0; r < 8; r++) {
             for (let c = 0; c < 8; c++) {
                 const p = board[r][c];
-                if (p?.color === turn) {
-                    const dirs = p.king ? [[1,1],[1,-1],[-1,1],[-1,-1]] : (p.color === 'white' ? [[-1,1],[-1,-1]] : [[1,1],[1,-1]]);
-                    dirs.forEach(d => {
-                        let nr = r + d[0], nc = c + d[1];
-                        while (nr >= 0 && nr < 8 && nc >= 0 && nc < 8 && !board[nr][nc]) {
-                            moves.push({ fr: r, fc: c, tr: nr, tc: nc });
-                            if (!p.king) break;
-                            nr += d[0]; nc += d[1];
+                if (p?.color !== turn) continue;
+                const dirs = [[1,1],[1,-1],[-1,1],[-1,-1]];
+                dirs.forEach(d => {
+                    let vr = r+d[0], vc = c+d[1], tr = r+d[0]*2, tc = c+d[1]*2;
+                    if (tr>=0 && tr<8 && tc>=0 && tc<8) {
+                        if (board[vr][vc] && board[vr][vc].color !== turn && !board[tr][tc]) {
+                            caps.push({ fr:r, fc:c, tr, tc, victim: {r:vr, c:vc} });
                         }
-                    });
-                }
+                    }
+                    let nr = r+d[0], nc = c+d[1];
+                    if (nr>=0 && nr<8 && nc>=0 && nc<8 && !board[nr][nc]) {
+                        if (p.king || (p.color==='white' && d[0]<0) || (p.color==='black' && d[0]>0)) {
+                            normals.push({ fr:r, fc:c, tr:nr, tc:nc });
+                        }
+                    }
+                });
             }
         }
-        return moves;
-    }
-
-    window.handleClick = function(r, c) {
-        if (!gameActive) return;
-        if (board[r][c]?.color === turn && !inMultiCapture) {
-            if (legalMoves.some(m => m.fr === r && m.fc === c)) selectedSq = { r, c };
-        } else if (selectedSq && !board[r][c]) {
-            const move = legalMoves.find(m => m.fr === selectedSq.r && m.fc === selectedSq.c && m.tr === r && m.tc === c);
-            if (move) executeMove(move);
-        }
-        render();
-    }
-
-    function executeMove(move) {
-        const p = board[move.fr][move.fc];
-        board[move.tr][move.tc] = p; board[move.fr][move.fc] = null;
-        if (move.victim) board[move.victim.r][move.victim.c] = null;
-        
-        if (move.totalCount > 1) {
-            inMultiCapture = true; selectedSq = { r: move.tr, c: move.tc };
-            const nextCaps = getBestCaptures(move.tr, move.tc, board);
-            legalMoves = nextCaps.filter(m => m.totalCount === move.totalCount - 1);
-        } else {
-            if (!p.king && ((p.color === 'white' && move.tr === 0) || (p.color === 'black' && move.tr === 7))) p.king = true;
-            inMultiCapture = false; turn = turn === 'white' ? 'black' : 'white';
-            selectedSq = null; 
-        }
-        updateFirebase();
-    }
-
-    // --- FIREBASE SYNC ---
-
-    function updateFirebase() {
-        update(gameRef, { board, turn, inMultiCapture, selectedSq, gameActive, gameStarted, timers });
-    }
-
-    onValue(gameRef, (snapshot) => {
-        const data = snapshot.val();
-        if (!data) {
-            inicializarBoardLocal();
-            return;
-        }
-        board = data.board;
-        turn = data.turn;
-        inMultiCapture = data.inMultiCapture;
-        selectedSq = data.selectedSq;
-        gameActive = data.gameActive;
-        gameStarted = data.gameStarted;
-        timers = data.timers;
-
-        document.getElementById('lobby-overlay').classList.toggle('hidden', gameStarted);
-        document.getElementById('host-name').innerText = "👑 SALA ONLINE";
-        
-        updateLogic();
-        render();
-    });
-
-    function inicializarBoardLocal() {
-        board = [];
-        for (let r = 0; r < 8; r++) {
-            board[r] = [];
-            for (let c = 0; c < 8; c++) {
-                board[r][c] = (r+c)%2===0 ? (r<3?{color:'black',king:false}:(r>4?{color:'white',king:false}:null)) : null;
-            }
-        }
-        update(gameRef, { board, turn: 'white', gameActive: false, gameStarted: false, timers: {white:300, black:300} });
-    }
-
-    window.iniciarPartidaFirebase = function() {
-        update(gameRef, { gameActive: true, gameStarted: true });
-    }
-
-    window.resetarJogoFirebase = function() {
-        set(gameRef, null);
-        location.reload();
-    }
-
-    // --- RENDER E UI ---
-
-    function updateLogic() {
-        if (inMultiCapture) return;
-        let caps = [];
-        for (let r = 0; r < 8; r++) {
-            for (let c = 0; c < 8; c++) {
-                if (board[r][c]?.color === turn) caps.push(...getBestCaptures(r, c, board));
-            }
-        }
-        if (caps.length > 0) {
-            const max = Math.max(...caps.map(m => m.totalCount));
-            legalMoves = caps.filter(m => m.totalCount === max);
-        } else {
-            legalMoves = getSimpleMoves();
-        }
+        legalMoves = caps.length > 0 ? caps : normals;
     }
 
     function render() {
         const boardEl = document.getElementById('board');
         boardEl.innerHTML = '';
         let wCount = 0, bCount = 0;
-
         for (let r = 0; r < 8; r++) {
             for (let c = 0; c < 8; c++) {
                 const sq = document.createElement('div');
                 sq.className = `square ${(r+c)%2===0?'dark-sq':'light-sq'}`;
                 sq.onclick = () => window.handleClick(r, c);
-                
                 const p = board[r][c];
                 if (p) {
                     p.color === 'white' ? wCount++ : bCount++;
@@ -293,34 +201,40 @@
                     if (selectedSq?.r === r && selectedSq?.c === c) div.classList.add('selected');
                     sq.appendChild(div);
                 }
-                if (selectedSq && legalMoves.some(m => m.fr === selectedSq.r && m.fc === selectedSq.c && m.tr === r && m.tc === c)) {
-                    const hint = document.createElement('div');
-                    hint.className = 'hint';
-                    sq.appendChild(hint);
+                if (selectedSq && legalMoves.some(m => m.fr===selectedSq.r && m.fc===selectedSq.c && m.tr===r && m.tc===c)) {
+                    const h = document.createElement('div'); h.className = 'hint'; sq.appendChild(h);
                 }
                 boardEl.appendChild(sq);
             }
         }
         document.getElementById('count-white').innerText = wCount;
         document.getElementById('count-black').innerText = bCount;
-        document.getElementById('status-bar').innerText = gameActive ? (turn === 'white' ? "VEZ DAS BRANCAS" : "VEZ DAS PRETAS") : "AGUARDANDO INÍCIO";
+        document.getElementById('status-bar').innerText = turn === 'white' ? "VEZ DAS BRANCAS" : "VEZ DAS PRETAS";
     }
 
-    // Timer sync (apenas para exibição local, o valor vem do Firebase)
-    setInterval(() => {
-        if (!gameActive) return;
-        timers[turn]--;
-        const t = timers[turn];
-        const el = document.getElementById(`timer-${turn}`);
-        el.innerText = `${Math.floor(t/60).toString().padStart(2,'0')}:${(t%60).toString().padStart(2,'0')}`;
-        el.classList.add('active');
-        document.getElementById(`timer-${turn === 'white' ? 'black' : 'white'}`).classList.remove('active');
-    }, 1000);
-
-    window.toggleMenu = function() {
-        document.getElementById('side-menu').classList.toggle('open');
-        document.getElementById('overlay').style.display = document.getElementById('side-menu').classList.contains('open') ? 'block' : 'none';
-    }
+    // --- ESCUTA DO FIREBASE ---
+    onValue(gameRef, (snapshot) => {
+        const data = snapshot.val();
+        if (!data) {
+            // Inicializar novo jogo
+            let newBoard = [];
+            for(let r=0; r<8; r++) {
+                newBoard[r] = [];
+                for(let c=0; c<8; c++) {
+                    newBoard[r][c] = (r+c)%2===0 ? (r<3?{color:'black',king:false}:(r>4?{color:'white',king:false}:null)) : null;
+                }
+            }
+            set(gameRef, { board: newBoard, turn: 'white', gameStarted: false, gameActive: false });
+            return;
+        }
+        board = data.board;
+        turn = data.turn;
+        gameStarted = data.gameStarted;
+        gameActive = data.gameActive;
+        document.getElementById('lobby-overlay').classList.toggle('hidden', gameStarted);
+        updateLogic();
+        render();
+    });
 </script>
 </body>
 </html>
