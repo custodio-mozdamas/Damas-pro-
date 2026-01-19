@@ -3,80 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Damas Pro - Fix Peças</title>
+    <title>Damas Pro Master - Firebase Edition</title>
     <style>
         :root {
             --bg: #1a1a1a;
+            --panel: #252525;
             --board-dark: #769656;
             --board-light: #eeeed2;
-            --white-p: radial-gradient(circle, #ffffff 30%, #f0f0f0 100%);
+            --white-p: radial-gradient(circle, #ffffff 30%, #cccccc 100%);
             --black-p: radial-gradient(circle, #444444 30%, #000000 100%);
             --accent: #2ecc71;
+            --danger: #e74c3c;
             --warning: #f1c40f;
         }
 
-        * { 
-            box-sizing: border-box; 
-            -webkit-tap-highlight-color: transparent; 
-            touch-action: none; 
-            user-select: none;
-        }
-
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
         body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        #top-bar { background: #111; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
-        #game-info { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; background: #222; }
-        #board-wrapper { flex: 1; display: flex; align-items: center; justify-content: center; padding: 10px; position: relative; }
+
+        #top-bar { background: #111; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; height: 50px; border-bottom: 1px solid #333; }
+        .viewer-count { font-size: 12px; color: #aaa; display: flex; align-items: center; gap: 5px; }
+        .dot { width: 8px; height: 8px; background: var(--danger); border-radius: 50%; display: inline-block; animation: pulse 1.5s infinite; }
         
-        #board { 
-            width: min(90vw, 450px); 
-            height: min(90vw, 450px); 
-            display: grid; 
-            grid-template-columns: repeat(8, 1fr); 
-            grid-template-rows: repeat(8, 1fr); 
-            border: 5px solid #333;
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
+        #game-info { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px 15px; background: #222; height: 110px; }
+        .hud-top { display: flex; justify-content: space-between; font-size: 10px; color: #888; margin-bottom: 2px; font-weight: bold; }
+        
+        #board-wrapper { flex: 1; display: flex; align-items: center; justify-content: center; padding: 10px; position: relative; }
+        #board { width: min(90vw, 450px); height: min(90vw, 450px); display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); border: 4px solid #333; position: relative; transition: transform 0.5s ease; }
+
+        #lobby-overlay, #game-over-overlay, #draw-overlay { 
+            position: absolute; inset: 0; background: rgba(0,0,0,0.95); z-index: 100; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;
         }
+        .hidden { display: none !important; }
+
+        .modal-title { font-size: 2rem; color: var(--accent); margin-bottom: 10px; }
+        .modal-msg { color: #ccc; margin-bottom: 25px; font-size: 1.1rem; max-width: 80%; }
 
         .square { width: 100%; height: 100%; position: relative; display: flex; justify-content: center; align-items: center; }
         .dark-sq { background-color: var(--board-dark); }
         .light-sq { background-color: var(--board-light); }
+        .piece { position: absolute; width: 80%; height: 80%; border-radius: 50%; z-index: 2; box-shadow: 0 4px 4px rgba(0,0,0,0.4); pointer-events: none; transform: rotate(var(--piece-rotation, 0deg)); transition: transform 0.3s ease; }
+        .white { background: var(--white-p); border: 1px solid #999; }
+        .black { background: var(--black-p); border: 1px solid #333; }
+        .king::after { content: '👑'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: min(4vw, 20px); }
+        .selected { transform: scale(1.1) rotate(var(--piece-rotation, 0deg)); outline: 4px solid #f1c40f; z-index: 10; }
+        .hint { position: absolute; width: 35%; height: 35%; background: rgba(0, 255, 0, 0.4); border-radius: 50%; z-index: 1; }
 
-        .piece { 
-            position: absolute; 
-            width: 85%; 
-            height: 85%; 
-            border-radius: 50%; 
-            z-index: 10; 
-            pointer-events: none; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.5);
-            border: 2px solid rgba(0,0,0,0.2);
-        }
-        .white { background: var(--white-p); }
-        .black { background: var(--black-p); }
-        .king::after { content: '👑'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 20px; }
-        
-        .selected-sq { background-color: rgba(241, 196, 15, 0.7) !important; }
-        .hint { position: absolute; width: 30%; height: 30%; background: rgba(0, 255, 0, 0.6); border-radius: 50%; z-index: 15; pointer-events: none; }
+        #side-menu { position: fixed; top: 0; right: -280px; width: 280px; height: 100%; background: var(--panel); box-shadow: -5px 0 15px rgba(0,0,0,0.5); transition: 0.3s; z-index: 1000; padding: 20px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+        #side-menu.open { right: 0; }
+        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; z-index: 999; }
 
-        .timer { font-family: monospace; font-size: 1.5rem; background: #000; padding: 5px; text-align: center; border-radius: 4px; color: #444; border: 2px solid #333; }
+        .timer { font-family: monospace; font-size: 1.6rem; background: #000; padding: 5px; text-align: center; border-radius: 4px; color: #444; border: 2px solid #333; }
         .timer.active { color: var(--accent); border-color: var(--accent); }
-        #status-bar { grid-column: span 2; text-align: center; color: var(--warning); font-weight: bold; font-size: 0.9rem; margin-top: 5px; }
+        #status-bar { grid-column: span 2; text-align: center; color: #f1c40f; font-weight: bold; font-size: 0.9rem; margin-top: 5px; }
+        .menu-btn { width: 100%; padding: 10px; background: #333; border: 1px solid #444; color: white; cursor: pointer; text-align: left; border-radius: 4px; font-weight: bold; }
+        .btn-start { background: var(--accent); color: black; text-align: center; margin-top: 15px; }
     </style>
 </head>
 <body>
 
+    <div id="overlay" onclick="toggleMenu()"></div>
+
     <div id="top-bar">
-        <div style="font-weight: bold; color: var(--accent);">👑 DAMAS PRO</div>
-        <div id="status-online" style="font-size: 12px; color: #aaa;">Conectado</div>
+        <div id="host-name" style="font-weight: bold; color: var(--accent);">👑 CARREGANDO...</div>
+        <div class="viewer-count"><span class="dot"></span> Online</div>
+        <div onclick="toggleMenu()" style="cursor:pointer; font-size: 24px;">⋮</div>
     </div>
 
     <div id="game-info">
-        <div><div id="timer-black" class="timer">05:00</div></div>
-        <div><div id="timer-white" class="timer active">05:00</div></div>
-        <div id="status-bar">Sincronizando...</div>
+        <div>
+            <div class="hud-top"><span>PRETAS</span> <span id="count-black">12</span></div>
+            <div id="timer-black" class="timer">05:00</div>
+        </div>
+        <div>
+            <div class="hud-top"><span>BRANCAS</span> <span id="count-white">12</span></div>
+            <div id="timer-white" class="timer active">05:00</div>
+        </div>
+        <div id="status-bar">SINCRONIZANDO...</div>
     </div>
 
     <div id="board-wrapper">
+        <div id="lobby-overlay">
+            <h2 class="modal-title">SALA DE ESPERA</h2>
+            <button id="start-btn" class="menu-btn btn-start" onclick="iniciarPartidaFirebase()" style="width:200px">INICIAR PARTIDA</button>
+        </div>
+
+        <div id="game-over-overlay" class="hidden">
+            <h2 id="game-over-title" class="modal-title">FIM DE JOGO</h2>
+            <p id="game-over-msg" class="modal-msg"></p>
+            <button class="menu-btn btn-start" onclick="resetarJogoFirebase()" style="width:200px">JOGAR NOVAMENTE</button>
+        </div>
+
         <div id="board"></div>
+    </div>
+
+    <div id="side-menu">
+        <h3 style="margin: 0; border-bottom: 1px solid #444; padding-bottom: 10px;">Opções</h3>
+        <button class="menu-btn" onclick="resetarJogoFirebase()" style="margin-top:10px; background:#c0392b; border:none; text-align:center;">REINICIAR TUDO</button>
     </div>
 
 <script type="module">
@@ -95,156 +120,207 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const gameRef = ref(db, 'partida/atual');
+    const gameRef = ref(db, 'partida/master');
 
     let board = [];
     let turn = 'white';
     let selectedSq = null;
     let legalMoves = [];
+    let inMultiCapture = false;
     let timers = { white: 300, black: 300 };
+    let gameActive = false;
+    let gameStarted = false;
 
-    // FUNÇÃO PARA CRIAR O TABULEIRO INICIAL
-    function createInitialBoard() {
-        let newBoard = [];
+    // --- LÓGICA DE MOVIMENTO (DO SEU CÓDIGO) ---
+
+    function getBestCaptures(r, c, b, depth = 0) {
+        const p = b[r][c]; if(!p) return [];
+        let moves = []; const dirs = [[1,1],[1,-1],[-1,1],[-1,-1]];
+        const range = p.king ? 7 : 1;
+        dirs.forEach(d => {
+            for (let i = 1; i <= range; i++) {
+                let vr = r + d[0]*i, vc = c + d[1]*i;
+                if (vr < 0 || vr >= 8 || vc < 0 || vc >= 8) break;
+                if (b[vr][vc]) {
+                    if (b[vr][vc].color === p.color) break;
+                    let lr = vr + d[0], lc = vc + d[1];
+                    while (lr >= 0 && lr < 8 && lc >= 0 && lc < 8 && !b[lr][lc]) {
+                        const nextB = b.map(row => row.map(cell => cell ? {...cell} : null));
+                        nextB[lr][lc] = {...p}; nextB[r][c] = null; nextB[vr][vc] = null;
+                        const sub = getBestCaptures(lr, lc, nextB, depth + 1);
+                        if (sub.length > 0) sub.forEach(sm => moves.push({ fr: r, fc: c, tr: lr, tc: lc, victim: {r:vr, c:vc}, totalCount: sm.totalCount }));
+                        else moves.push({ fr: r, fc: c, tr: lr, tc: lc, victim: {r:vr, c:vc}, totalCount: depth + 1 });
+                        if (!p.king) break;
+                        lr += d[0]; lc += d[1];
+                    }
+                    break;
+                }
+            }
+        });
+        return moves;
+    }
+
+    function getSimpleMoves() {
+        let moves = [];
         for (let r = 0; r < 8; r++) {
-            newBoard[r] = [];
             for (let c = 0; c < 8; c++) {
-                if ((r + c) % 2 === 0) {
-                    if (r < 3) newBoard[r][c] = { color: 'black', king: false };
-                    else if (r > 4) newBoard[r][c] = { color: 'white', king: false };
-                    else newBoard[r][c] = null;
-                } else {
-                    newBoard[r][c] = null;
+                const p = board[r][c];
+                if (p?.color === turn) {
+                    const dirs = p.king ? [[1,1],[1,-1],[-1,1],[-1,-1]] : (p.color === 'white' ? [[-1,1],[-1,-1]] : [[1,1],[1,-1]]);
+                    dirs.forEach(d => {
+                        let nr = r + d[0], nc = c + d[1];
+                        while (nr >= 0 && nr < 8 && nc >= 0 && nc < 8 && !board[nr][nc]) {
+                            moves.push({ fr: r, fc: c, tr: nr, tc: nc });
+                            if (!p.king) break;
+                            nr += d[0]; nc += d[1];
+                        }
+                    });
                 }
             }
         }
-        return newBoard;
+        return moves;
     }
 
-    // DESENHA O TABULEIRO FÍSICO (HTML)
-    window.renderBoardStructure = function() {
-        const boardEl = document.getElementById('board');
-        boardEl.innerHTML = '';
-        for (let r = 0; r < 8; r++) {
-            for (let c = 0; c < 8; c++) {
-                const sq = document.createElement('div');
-                sq.className = `square ${(r+c)%2===0?'dark-sq':'light-sq'}`;
-                sq.id = `sq-${r}-${c}`;
-                sq.addEventListener('pointerdown', (e) => {
-                    e.preventDefault();
-                    handleInteraction(r, c);
-                });
-                boardEl.appendChild(sq);
-            }
-        }
-    };
-
-    function handleInteraction(r, c) {
-        const p = board[r][c];
-        if (p && p.color === turn) {
-            selectedSq = { r, c };
-        } else if (selectedSq) {
+    window.handleClick = function(r, c) {
+        if (!gameActive) return;
+        if (board[r][c]?.color === turn && !inMultiCapture) {
+            if (legalMoves.some(m => m.fr === r && m.fc === c)) selectedSq = { r, c };
+        } else if (selectedSq && !board[r][c]) {
             const move = legalMoves.find(m => m.fr === selectedSq.r && m.fc === selectedSq.c && m.tr === r && m.tc === c);
-            if (move) {
-                executeMove(move);
-            } else {
-                selectedSq = null;
-            }
+            if (move) executeMove(move);
         }
-        renderPieces();
+        render();
     }
 
     function executeMove(move) {
         const p = board[move.fr][move.fc];
-        board[move.tr][move.tc] = p;
-        board[move.fr][move.fc] = null;
+        board[move.tr][move.tc] = p; board[move.fr][move.fc] = null;
         if (move.victim) board[move.victim.r][move.victim.c] = null;
-        if (!p.king && ((p.color === 'white' && move.tr === 0) || (p.color === 'black' && move.tr === 7))) p.king = true;
         
-        turn = turn === 'white' ? 'black' : 'white';
-        selectedSq = null;
-        update(gameRef, { board, turn, timers });
+        if (move.totalCount > 1) {
+            inMultiCapture = true; selectedSq = { r: move.tr, c: move.tc };
+            const nextCaps = getBestCaptures(move.tr, move.tc, board);
+            legalMoves = nextCaps.filter(m => m.totalCount === move.totalCount - 1);
+        } else {
+            if (!p.king && ((p.color === 'white' && move.tr === 0) || (p.color === 'black' && move.tr === 7))) p.king = true;
+            inMultiCapture = false; turn = turn === 'white' ? 'black' : 'white';
+            selectedSq = null; 
+        }
+        updateFirebase();
+    }
+
+    // --- FIREBASE SYNC ---
+
+    function updateFirebase() {
+        update(gameRef, { board, turn, inMultiCapture, selectedSq, gameActive, gameStarted, timers });
     }
 
     onValue(gameRef, (snapshot) => {
         const data = snapshot.val();
-        if (!data || !data.board) {
-            // Se o Firebase estiver vazio, reinicia tudo
-            board = createInitialBoard();
-            set(gameRef, { board, turn: 'white', timers: {white:300, black:300} });
-        } else {
-            board = data.board;
-            turn = data.turn;
-            timers = data.timers || {white: 300, black: 300};
+        if (!data) {
+            inicializarBoardLocal();
+            return;
         }
+        board = data.board;
+        turn = data.turn;
+        inMultiCapture = data.inMultiCapture;
+        selectedSq = data.selectedSq;
+        gameActive = data.gameActive;
+        gameStarted = data.gameStarted;
+        timers = data.timers;
+
+        document.getElementById('lobby-overlay').classList.toggle('hidden', gameStarted);
+        document.getElementById('host-name').innerText = "👑 SALA ONLINE";
+        
         updateLogic();
-        renderPieces();
+        render();
     });
 
-    function updateLogic() {
-        let caps = [];
-        let normals = [];
+    function inicializarBoardLocal() {
+        board = [];
         for (let r = 0; r < 8; r++) {
+            board[r] = [];
             for (let c = 0; c < 8; c++) {
-                const p = board[r][c];
-                if (p?.color !== turn) continue;
-                const dirs = [[1,1],[1,-1],[-1,1],[-1,-1]];
-                dirs.forEach(d => {
-                    let vr = r+d[0], vc = c+d[1], tr = r+d[0]*2, tc = c+d[1]*2;
-                    if (tr>=0 && tr<8 && tc>=0 && tc<8) {
-                        if (board[vr][vc] && board[vr][vc].color !== turn && !board[tr][tc]) {
-                            caps.push({ fr:r, fc:c, tr, tc, victim: {r:vr, c:vc} });
-                        }
-                    }
-                    let nr = r+d[0], nc = c+d[1];
-                    if (nr>=0 && nr<8 && nc>=0 && nc<8 && !board[nr][nc]) {
-                        if (p.king || (p.color==='white' && d[0]<0) || (p.color==='black' && d[0]>0)) {
-                            normals.push({ fr:r, fc:c, tr:nr, tc:nc });
-                        }
-                    }
-                });
+                board[r][c] = (r+c)%2===0 ? (r<3?{color:'black',king:false}:(r>4?{color:'white',king:false}:null)) : null;
             }
         }
-        legalMoves = caps.length > 0 ? caps : normals;
+        update(gameRef, { board, turn: 'white', gameActive: false, gameStarted: false, timers: {white:300, black:300} });
     }
 
-    function renderPieces() {
-        document.getElementById('status-bar').innerText = turn === 'white' ? "VEZ DAS BRANCAS" : "VEZ DAS PRETAS";
+    window.iniciarPartidaFirebase = function() {
+        update(gameRef, { gameActive: true, gameStarted: true });
+    }
+
+    window.resetarJogoFirebase = function() {
+        set(gameRef, null);
+        location.reload();
+    }
+
+    // --- RENDER E UI ---
+
+    function updateLogic() {
+        if (inMultiCapture) return;
+        let caps = [];
         for (let r = 0; r < 8; r++) {
             for (let c = 0; c < 8; c++) {
-                const sq = document.getElementById(`sq-${r}-${c}`);
-                if (!sq) continue;
-                sq.innerHTML = '';
-                sq.classList.remove('selected-sq');
+                if (board[r][c]?.color === turn) caps.push(...getBestCaptures(r, c, board));
+            }
+        }
+        if (caps.length > 0) {
+            const max = Math.max(...caps.map(m => m.totalCount));
+            legalMoves = caps.filter(m => m.totalCount === max);
+        } else {
+            legalMoves = getSimpleMoves();
+        }
+    }
+
+    function render() {
+        const boardEl = document.getElementById('board');
+        boardEl.innerHTML = '';
+        let wCount = 0, bCount = 0;
+
+        for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+                const sq = document.createElement('div');
+                sq.className = `square ${(r+c)%2===0?'dark-sq':'light-sq'}`;
+                sq.onclick = () => window.handleClick(r, c);
                 
                 const p = board[r][c];
                 if (p) {
+                    p.color === 'white' ? wCount++ : bCount++;
                     const div = document.createElement('div');
                     div.className = `piece ${p.color} ${p.king ? 'king' : ''}`;
+                    if (selectedSq?.r === r && selectedSq?.c === c) div.classList.add('selected');
                     sq.appendChild(div);
                 }
-
-                if (selectedSq?.r === r && selectedSq?.c === c) {
-                    sq.classList.add('selected-sq');
+                if (selectedSq && legalMoves.some(m => m.fr === selectedSq.r && m.fc === selectedSq.c && m.tr === r && m.tc === c)) {
+                    const hint = document.createElement('div');
+                    hint.className = 'hint';
+                    sq.appendChild(hint);
                 }
-
-                if (selectedSq && legalMoves.some(m => m.fr===selectedSq.r && m.fc===selectedSq.c && m.tr===r && m.tc===c)) {
-                    const h = document.createElement('div');
-                    h.className = 'hint';
-                    sq.appendChild(h);
-                }
+                boardEl.appendChild(sq);
             }
         }
+        document.getElementById('count-white').innerText = wCount;
+        document.getElementById('count-black').innerText = bCount;
+        document.getElementById('status-bar').innerText = gameActive ? (turn === 'white' ? "VEZ DAS BRANCAS" : "VEZ DAS PRETAS") : "AGUARDANDO INÍCIO";
     }
 
-    renderBoardStructure();
-    
+    // Timer sync (apenas para exibição local, o valor vem do Firebase)
     setInterval(() => {
-        if (turn === 'white') timers.white--; else timers.black--;
-        const f = (s) => `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
-        document.getElementById('timer-white').innerText = f(timers.white);
-        document.getElementById('timer-black').innerText = f(timers.black);
+        if (!gameActive) return;
+        timers[turn]--;
+        const t = timers[turn];
+        const el = document.getElementById(`timer-${turn}`);
+        el.innerText = `${Math.floor(t/60).toString().padStart(2,'0')}:${(t%60).toString().padStart(2,'0')}`;
+        el.classList.add('active');
+        document.getElementById(`timer-${turn === 'white' ? 'black' : 'white'}`).classList.remove('active');
     }, 1000);
+
+    window.toggleMenu = function() {
+        document.getElementById('side-menu').classList.toggle('open');
+        document.getElementById('overlay').style.display = document.getElementById('side-menu').classList.contains('open') ? 'block' : 'none';
+    }
 </script>
 </body>
 </html>
