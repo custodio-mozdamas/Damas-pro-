@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Damas Pro Master - Firebase Fixed</title>
+    <title>Damas Pro Master - Versão Ultra Full</title>
     <style>
         :root {
             --bg: #1a1a1a;
@@ -17,224 +17,553 @@
             --warning: #f1c40f;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-        body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            touch-action: manipulation; 
+        }
 
-        #top-bar { background: #111; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; height: 50px; border-bottom: 1px solid #333; }
-        .viewer-count { font-size: 12px; color: #aaa; display: flex; align-items: center; gap: 5px; }
-        .dot { width: 8px; height: 8px; background: var(--danger); border-radius: 50%; display: inline-block; animation: pulse 1.5s infinite; }
+        body { 
+            background: var(--bg); 
+            color: white; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            overflow: hidden; 
+        }
+
+        /* BARRA SUPERIOR */
+        #top-bar { 
+            background: #111; 
+            padding: 10px 15px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            height: 50px; 
+            border-bottom: 1px solid #333; 
+            z-index: 10;
+        }
+
+        .viewer-count { 
+            font-size: 12px; 
+            color: #aaa; 
+            display: flex; 
+            align-items: center; 
+            gap: 5px; 
+        }
+
+        .dot { 
+            width: 8px; 
+            height: 8px; 
+            background: var(--danger); 
+            border-radius: 50%; 
+            display: inline-block; 
+            animation: pulse 1.5s infinite; 
+        }
         
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
-        #game-info { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px 15px; background: #222; height: 110px; }
-        .hud-top { display: flex; justify-content: space-between; font-size: 10px; color: #888; margin-bottom: 2px; font-weight: bold; }
-        
-        #board-wrapper { flex: 1; display: flex; align-items: center; justify-content: center; padding: 10px; position: relative; }
-        #board { width: min(90vw, 450px); height: min(90vw, 450px); display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); border: 4px solid #333; position: relative; }
-
-        #lobby-overlay, #game-over-overlay { 
-            position: absolute; inset: 0; background: rgba(0,0,0,0.95); z-index: 100; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;
+        /* HUD DE INFORMAÇÕES */
+        #game-info { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 10px; 
+            padding: 10px 15px; 
+            background: #222; 
+            height: 115px; 
+            border-bottom: 2px solid #111;
         }
-        .hidden { display: none !important; }
 
-        .modal-title { font-size: 2rem; color: var(--accent); margin-bottom: 10px; }
+        .hud-top { 
+            display: flex; 
+            justify-content: space-between; 
+            font-size: 11px; 
+            color: #888; 
+            margin-bottom: 4px; 
+            font-weight: bold; 
+            text-transform: uppercase;
+        }
+
+        .timer { 
+            font-family: 'Courier New', Courier, monospace; 
+            font-size: 1.8rem; 
+            background: #000; 
+            padding: 8px; 
+            text-align: center; 
+            border-radius: 6px; 
+            color: #444; 
+            border: 2px solid #333; 
+            transition: all 0.3s ease;
+        }
+
+        .timer.active { 
+            color: var(--accent); 
+            border-color: var(--accent); 
+            box-shadow: 0 0 10px rgba(46, 204, 113, 0.2);
+        }
+
+        #status-bar { 
+            grid-column: span 2; 
+            text-align: center; 
+            color: var(--warning); 
+            font-weight: bold; 
+            font-size: 0.95rem; 
+            margin-top: 5px; 
+            letter-spacing: 1px;
+        }
+
+        /* ÁREA DO TABULEIRO */
+        #board-wrapper { 
+            flex: 1; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 15px; 
+            position: relative; 
+            background: radial-gradient(circle, #222 0%, #111 100%);
+        }
+
+        #board { 
+            width: min(92vw, 480px); 
+            height: min(92vw, 480px); 
+            display: grid; 
+            grid-template-columns: repeat(8, 1fr); 
+            grid-template-rows: repeat(8, 1fr); 
+            border: 6px solid #333; 
+            border-radius: 4px;
+            position: relative; 
+            background-color: #444;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* PEÇAS E QUADRADOS */
         .square { width: 100%; height: 100%; position: relative; display: flex; justify-content: center; align-items: center; }
         .dark-sq { background-color: var(--board-dark); }
         .light-sq { background-color: var(--board-light); }
-        .piece { position: absolute; width: 85%; height: 85%; border-radius: 50%; z-index: 2; box-shadow: 0 4px 4px rgba(0,0,0,0.4); pointer-events: none; }
-        .white { background: var(--white-p); border: 1px solid #999; }
-        .black { background: var(--black-p); border: 1px solid #333; }
-        .king::after { content: '👑'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 20px; }
-        .selected { outline: 4px solid #f1c40f; z-index: 10; }
-        .hint { position: absolute; width: 35%; height: 35%; background: rgba(0, 255, 0, 0.4); border-radius: 50%; z-index: 1; }
+        
+        .piece { 
+            position: absolute; 
+            width: 82%; 
+            height: 82%; 
+            border-radius: 50%; 
+            z-index: 2; 
+            box-shadow: 0 5px 5px rgba(0,0,0,0.4); 
+            pointer-events: none; 
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
 
-        #side-menu { position: fixed; top: 0; right: -280px; width: 280px; height: 100%; background: var(--panel); box-shadow: -5px 0 15px rgba(0,0,0,0.5); transition: 0.3s; z-index: 1000; padding: 20px; }
+        .white { background: var(--white-p); border: 2px solid #bbb; }
+        .black { background: var(--black-p); border: 2px solid #222; }
+        
+        .king::after { 
+            content: '👑'; 
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            font-size: min(5vw, 24px); 
+            text-shadow: 0 2px 2px rgba(0,0,0,0.5);
+        }
+
+        .selected { 
+            transform: scale(1.15); 
+            outline: 4px solid var(--warning); 
+            z-index: 10; 
+            box-shadow: 0 0 20px var(--warning);
+        }
+
+        .hint { 
+            position: absolute; 
+            width: 35%; 
+            height: 35%; 
+            background: rgba(46, 204, 113, 0.6); 
+            border-radius: 50%; 
+            z-index: 1; 
+            animation: pulseHint 1s infinite;
+        }
+
+        @keyframes pulseHint { 0% { transform: scale(1); opacity: 0.6; } 50% { transform: scale(1.2); opacity: 0.3; } 100% { transform: scale(1); opacity: 0.6; } }
+
+        /* MENU LATERAL */
+        #side-menu { 
+            position: fixed; 
+            top: 0; 
+            right: -300px; 
+            width: 300px; 
+            height: 100%; 
+            background: var(--panel); 
+            box-shadow: -10px 0 30px rgba(0,0,0,0.7); 
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+            z-index: 1000; 
+            padding: 25px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+        }
+
         #side-menu.open { right: 0; }
-        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; z-index: 999; }
 
-        .timer { font-family: monospace; font-size: 1.6rem; background: #000; padding: 5px; text-align: center; border-radius: 4px; color: #444; border: 2px solid #333; }
-        .timer.active { color: var(--accent); border-color: var(--accent); }
-        #status-bar { grid-column: span 2; text-align: center; color: #f1c40f; font-weight: bold; font-size: 0.9rem; }
-        .menu-btn { width: 100%; padding: 12px; background: var(--accent); color: black; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; margin-top: 10px; }
+        #overlay { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.8); 
+            display: none; 
+            z-index: 999; 
+            backdrop-filter: blur(3px);
+        }
+
+        .menu-btn { 
+            width: 100%; 
+            padding: 14px; 
+            background: #3a3a3a; 
+            border: 1px solid #555; 
+            color: white; 
+            cursor: pointer; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+        }
+
+        .btn-danger { background: var(--danger); border: none; }
+        .btn-success { background: var(--accent); border: none; color: black; }
+
+        /* OVERLAYS DE ESTADO */
+        #lobby-overlay {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 100;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div id="overlay" onclick="toggleMenu()"></div>
+    <div id="overlay" onclick="window.toggleMenu()"></div>
 
     <div id="top-bar">
-        <div id="host-name" style="font-weight: bold; color: var(--accent);">SALA ONLINE</div>
-        <div class="viewer-count"><span class="dot"></span> Online</div>
-        <div onclick="toggleMenu()" style="cursor:pointer; font-size: 24px;">⋮</div>
+        <div id="host-name" style="font-weight: bold; color: var(--accent); letter-spacing: 1px;">👑 CONECTANDO...</div>
+        <div class="viewer-count">
+            <span class="dot"></span> <span id="online-count">1</span> online
+        </div>
+        <div onclick="window.toggleMenu()" style="cursor:pointer; font-size: 28px; padding: 5px;">⋮</div>
     </div>
 
     <div id="game-info">
         <div>
-            <div class="hud-top">PRETAS <span id="count-black">12</span></div>
+            <div class="hud-top"><span>PRETAS</span> <span id="count-black">12</span></div>
             <div id="timer-black" class="timer">05:00</div>
         </div>
         <div>
-            <div class="hud-top">BRANCAS <span id="count-white">12</span></div>
+            <div class="hud-top"><span>BRANCAS</span> <span id="count-white">12</span></div>
             <div id="timer-white" class="timer active">05:00</div>
         </div>
-        <div id="status-bar">CONECTANDO...</div>
+        <div id="status-bar">SINCRONIZANDO COM SERVIDOR...</div>
     </div>
 
     <div id="board-wrapper">
         <div id="lobby-overlay">
-            <h2 class="modal-title">SALA DE ESPERA</h2>
-            <button class="menu-btn" onclick="iniciarPartida()">INICIAR JOGO</button>
+            <h1 style="color: var(--accent); margin-bottom: 5px;">DAMAS PRO</h1>
+            <p style="color: #888; margin-bottom: 30px;">Pronto para a partida?</p>
+            <button class="menu-btn btn-success" style="width: 220px;" onclick="window.iniciarJogo()">INICIAR PARTIDA</button>
         </div>
         <div id="board"></div>
     </div>
 
     <div id="side-menu">
-        <h3 style="color:white">Menu</h3>
-        <button class="menu-btn" style="background:var(--danger); color:white" onclick="resetarTudo()">REINICIAR TUDO</button>
+        <h2 style="margin: 0 0 10px 0; color: var(--accent); border-bottom: 1px solid #444; padding-bottom: 10px;">CONFIGURAÇÕES</h2>
+        
+        <label style="font-size: 11px; color: #aaa;">TEMPO DE JOGO</label>
+        <button class="menu-btn">5 MINUTOS (PADRÃO)</button>
+
+        <label style="font-size: 11px; color: #aaa;">AÇÕES</label>
+        <button class="menu-btn" onclick="window.toggleMenu()">VOLTAR AO JOGO</button>
+        <button class="menu-btn btn-danger" style="margin-top: auto;" onclick="window.resetarServidor()">REINICIAR TUDO (RESET)</button>
     </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
+    // CONFIGURAÇÃO OFICIAL FIREBASE
     const firebaseConfig = {
-      apiKey: "AIzaSyCYv_oBSjS7x7hLx8p1IANOWMI5G6OmpGo",
-      authDomain: "damas-pro-cf92b.firebaseapp.com",
-      databaseURL: "https://damas-pro-cf92b-default-rtdb.firebaseio.com",
-      projectId: "damas-pro-cf92b",
-      storageBucket: "damas-pro-cf92b.firebasestorage.app",
-      messagingSenderId: "606989896803",
-      appId: "1:606989896803:web:63c2b940baf9f82fcf7c56"
+        apiKey: "AIzaSyCYv_oBSjS7x7hLx8p1IANOWMI5G6OmpGo",
+        authDomain: "damas-pro-cf92b.firebaseapp.com",
+        databaseURL: "https://damas-pro-cf92b-default-rtdb.firebaseio.com",
+        projectId: "damas-pro-cf92b",
+        storageBucket: "damas-pro-cf92b.firebasestorage.app",
+        messagingSenderId: "606989896803",
+        appId: "1:606989896803:web:63c2b940baf9f82fcf7c56"
     };
 
+    // INICIALIZAÇÃO
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const gameRef = ref(db, 'partida/master');
+    const gameRef = ref(db, 'partida/master_v3');
 
+    // ESTADO LOCAL
     let board = [];
     let turn = 'white';
     let selectedSq = null;
     let legalMoves = [];
     let gameActive = false;
     let gameStarted = false;
+    let timers = { white: 300, black: 300 };
 
-    // --- FUNÇÕES EXPOSTAS AO WINDOW PARA O HTML ENCONTRAR ---
-    window.iniciarPartida = () => update(gameRef, { gameStarted: true, gameActive: true });
-    window.resetarTudo = () => { set(gameRef, null); location.reload(); };
+    // --- FUNÇÕES DE EXPORTAÇÃO GLOBAL ---
     window.toggleMenu = () => {
-        const m = document.getElementById('side-menu');
-        const o = document.getElementById('overlay');
-        m.classList.toggle('open');
-        o.style.display = m.classList.contains('open') ? 'block' : 'none';
+        const menu = document.getElementById('side-menu');
+        const overlay = document.getElementById('overlay');
+        const isOpen = menu.classList.contains('open');
+        
+        if (isOpen) {
+            menu.classList.remove('open');
+            overlay.style.display = 'none';
+        } else {
+            menu.classList.add('open');
+            overlay.style.display = 'block';
+        }
+    };
+
+    window.iniciarJogo = () => {
+        update(gameRef, { gameStarted: true, gameActive: true });
+    };
+
+    window.resetarServidor = () => {
+        if (confirm("Isso apagará o progresso atual. Confirmar?")) {
+            set(gameRef, null);
+            location.reload();
+        }
     };
 
     window.handleClick = (r, c) => {
         if (!gameActive) return;
-        const p = board[r][c];
-        if (p?.color === turn) {
-            selectedSq = { r, c };
-        } else if (selectedSq) {
-            const move = legalMoves.find(m => m.fr === selectedSq.r && m.fc === selectedSq.c && m.tr === r && m.tc === c);
-            if (move) {
-                // Executar movimento
-                board[move.tr][move.tc] = board[move.fr][move.fc];
-                board[move.fr][move.fc] = null;
-                if (move.victim) board[move.victim.r][move.victim.c] = null;
-                
-                // Coroação
-                const piece = board[move.tr][move.tc];
-                if (!piece.king && ((piece.color === 'white' && move.tr === 0) || (piece.color === 'black' && move.tr === 7))) piece.king = true;
 
+        const p = board[r][c];
+        
+        // Seleção de peça
+        if (p && p.color === turn) {
+            selectedSq = { r, c };
+            render();
+            return;
+        }
+
+        // Execução de movimento
+        if (selectedSq) {
+            const move = legalMoves.find(m => 
+                m.fr === selectedSq.r && m.fc === selectedSq.c && 
+                m.tr === r && m.tc === c
+            );
+
+            if (move) {
+                const movingPiece = board[move.fr][move.fc];
+                
+                // Realiza o movimento no array
+                board[move.tr][move.tc] = movingPiece;
+                board[move.fr][move.fc] = null;
+
+                // Remove peça capturada
+                if (move.victim) {
+                    board[move.victim.r][move.victim.c] = null;
+                }
+
+                // Promoção a Dama
+                if (!movingPiece.king) {
+                    if ((movingPiece.color === 'white' && move.tr === 0) || 
+                        (movingPiece.color === 'black' && move.tr === 7)) {
+                        movingPiece.king = true;
+                    }
+                }
+
+                // Troca de turno e sincronização
                 turn = turn === 'white' ? 'black' : 'white';
                 selectedSq = null;
-                update(gameRef, { board, turn });
+                
+                update(gameRef, { 
+                    board: board, 
+                    turn: turn,
+                    timers: timers 
+                });
             } else {
                 selectedSq = null;
+                render();
             }
         }
-        render();
     };
 
-    // --- LÓGICA DE JOGO ---
+    // --- LÓGICA DE MOVIMENTAÇÃO (REGRAS) ---
+    function getBestCaptures(r, c, b) {
+        const p = b[r][c];
+        if (!p) return [];
+
+        let captures = [];
+        const dirs = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
+        const range = p.king ? 7 : 1;
+
+        dirs.forEach(d => {
+            for (let i = 1; i <= range; i++) {
+                let vr = r + d[0] * i;
+                let vc = c + d[1] * i;
+
+                if (vr < 0 || vr >= 8 || vc < 0 || vc >= 8) break;
+
+                if (b[vr][vc]) {
+                    if (b[vr][vc].color === p.color) break;
+                    
+                    let targetR = vr + d[0];
+                    let targetC = vc + d[1];
+
+                    if (targetR >= 0 && targetR < 8 && targetC >= 0 && targetC < 8 && !b[targetR][targetC]) {
+                        captures.push({ 
+                            fr: r, fc: c, 
+                            tr: targetR, tc: targetC, 
+                            victim: { r: vr, c: vc } 
+                        });
+                    }
+                    break;
+                }
+            }
+        });
+        return captures;
+    }
+
     function updateLogic() {
-        let caps = [];
-        let normals = [];
+        let captures = [];
+        let normalMoves = [];
+
         for (let r = 0; r < 8; r++) {
             for (let c = 0; c < 8; c++) {
                 const p = board[r][c];
                 if (p?.color !== turn) continue;
-                const dirs = [[1,1],[1,-1],[-1,1],[-1,-1]];
+
+                // Busca Capturas (Prioridade)
+                const pieceCaptures = getBestCaptures(r, c, board);
+                if (pieceCaptures.length > 0) captures.push(...pieceCaptures);
+
+                // Busca Movimentos Normais
+                const dirs = p.king ? [[1,1],[1,-1],[-1,1],[-1,-1]] : (p.color === 'white' ? [[-1,1],[-1,-1]] : [[1,1],[1,-1]]);
                 dirs.forEach(d => {
-                    let vr = r+d[0], vc = c+d[1], tr = r+d[0]*2, tc = c+d[1]*2;
-                    if (tr>=0 && tr<8 && tc>=0 && tc<8) {
-                        if (board[vr][vc] && board[vr][vc].color !== turn && !board[tr][tc]) {
-                            caps.push({ fr:r, fc:c, tr, tc, victim: {r:vr, c:vc} });
-                        }
-                    }
-                    let nr = r+d[0], nc = c+d[1];
-                    if (nr>=0 && nr<8 && nc>=0 && nc<8 && !board[nr][nc]) {
-                        if (p.king || (p.color==='white' && d[0]<0) || (p.color==='black' && d[0]>0)) {
-                            normals.push({ fr:r, fc:c, tr:nr, tc:nc });
-                        }
+                    let nr = r + d[0];
+                    let nc = c + d[1];
+                    if (nr >= 0 && nr < 8 && nc >= 0 && nc < 8 && !board[nr][nc]) {
+                        normalMoves.push({ fr: r, fc: c, tr: nr, tc: nc });
                     }
                 });
             }
         }
-        legalMoves = caps.length > 0 ? caps : normals;
+
+        // Regra da captura obrigatória
+        legalMoves = captures.length > 0 ? captures : normalMoves;
     }
 
+    // --- RENDERIZAÇÃO ---
     function render() {
         const boardEl = document.getElementById('board');
+        if (!boardEl) return;
         boardEl.innerHTML = '';
-        let wCount = 0, bCount = 0;
+
+        let whiteCount = 0;
+        let blackCount = 0;
+
         for (let r = 0; r < 8; r++) {
             for (let c = 0; c < 8; c++) {
-                const sq = document.createElement('div');
-                sq.className = `square ${(r+c)%2===0?'dark-sq':'light-sq'}`;
-                sq.onclick = () => window.handleClick(r, c);
-                const p = board[r][c];
-                if (p) {
-                    p.color === 'white' ? wCount++ : bCount++;
-                    const div = document.createElement('div');
-                    div.className = `piece ${p.color} ${p.king ? 'king' : ''}`;
-                    if (selectedSq?.r === r && selectedSq?.c === c) div.classList.add('selected');
-                    sq.appendChild(div);
+                const square = document.createElement('div');
+                square.className = `square ${(r + c) % 2 === 0 ? 'dark-sq' : 'light-sq'}`;
+                square.onclick = () => window.handleClick(r, c);
+
+                const pieceData = board[r][c];
+                if (pieceData) {
+                    pieceData.color === 'white' ? whiteCount++ : blackCount++;
+                    
+                    const pDiv = document.createElement('div');
+                    pDiv.className = `piece ${pieceData.color} ${pieceData.king ? 'king' : ''}`;
+                    
+                    if (selectedSq && selectedSq.r === r && selectedSq.c === c) {
+                        pDiv.classList.add('selected');
+                    }
+                    square.appendChild(pDiv);
                 }
-                if (selectedSq && legalMoves.some(m => m.fr===selectedSq.r && m.fc===selectedSq.c && m.tr===r && m.tc===c)) {
-                    const h = document.createElement('div'); h.className = 'hint'; sq.appendChild(h);
+
+                // Dicas de movimento (Hints)
+                if (selectedSq && legalMoves.some(m => m.fr === selectedSq.r && m.fc === selectedSq.c && m.tr === r && m.tc === c)) {
+                    const hint = document.createElement('div');
+                    hint.className = 'hint';
+                    square.appendChild(hint);
                 }
-                boardEl.appendChild(sq);
+
+                boardEl.appendChild(square);
             }
         }
-        document.getElementById('count-white').innerText = wCount;
-        document.getElementById('count-black').innerText = bCount;
+
+        // Atualiza HUD
+        document.getElementById('count-white').innerText = whiteCount;
+        document.getElementById('count-black').innerText = blackCount;
         document.getElementById('status-bar').innerText = turn === 'white' ? "VEZ DAS BRANCAS" : "VEZ DAS PRETAS";
+        
+        document.getElementById('timer-white').classList.toggle('active', turn === 'white');
+        document.getElementById('timer-black').classList.toggle('active', turn === 'black');
     }
 
-    // --- ESCUTA DO FIREBASE ---
+    // --- SYNC FIREBASE ---
     onValue(gameRef, (snapshot) => {
         const data = snapshot.val();
+        
         if (!data) {
-            // Inicializar novo jogo
-            let newBoard = [];
-            for(let r=0; r<8; r++) {
+            // Inicialização do Banco de Dados se estiver vazio
+            const newBoard = [];
+            for (let r = 0; r < 8; r++) {
                 newBoard[r] = [];
-                for(let c=0; c<8; c++) {
-                    newBoard[r][c] = (r+c)%2===0 ? (r<3?{color:'black',king:false}:(r>4?{color:'white',king:false}:null)) : null;
+                for (let c = 0; c < 8; c++) {
+                    newBoard[r][c] = (r + c) % 2 === 0 ? (r < 3 ? { color: 'black', king: false } : (r > 4 ? { color: 'white', king: false } : null)) : null;
                 }
             }
-            set(gameRef, { board: newBoard, turn: 'white', gameStarted: false, gameActive: false });
+            set(gameRef, { 
+                board: newBoard, 
+                turn: 'white', 
+                gameStarted: false, 
+                gameActive: false,
+                timers: { white: 300, black: 300 } 
+            });
             return;
         }
+
         board = data.board;
         turn = data.turn;
         gameStarted = data.gameStarted;
         gameActive = data.gameActive;
+        timers = data.timers;
+
+        // Atualiza UI de Estado
         document.getElementById('lobby-overlay').classList.toggle('hidden', gameStarted);
+        document.getElementById('host-name').innerText = gameStarted ? "👑 PARTIDA EM CURSO" : "👑 AGUARDANDO JOGADOR";
+        
         updateLogic();
         render();
     });
+
+    // SISTEMA DE TIMER (LOCAL)
+    setInterval(() => {
+        if (!gameActive) return;
+        
+        timers[turn]--;
+        
+        const m = Math.floor(timers[turn] / 60).toString().padStart(2, '0');
+        const s = (timers[turn] % 60).toString().padStart(2, '0');
+        document.getElementById(`timer-${turn}`).innerText = `${m}:${s}`;
+
+        if (timers[turn] <= 0) {
+            gameActive = false;
+            alert("Tempo esgotado!");
+            update(gameRef, { gameActive: false });
+        }
+    }, 1000);
+
 </script>
 </body>
 </html>
