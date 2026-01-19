@@ -390,4 +390,43 @@
             }
         }
         document.getElementById('count-white').innerText = wCount;
-          
+          document.getElementById('count-black').innerText = bCount;
+        if(gameStarted && gameActive) {
+            document.getElementById('status-bar').innerText = turn === 'white' ? "VEZ DAS BRANCAS" : "VEZ DAS PRETAS";
+            document.getElementById('timer-white').classList.toggle('active', turn === 'white');
+            document.getElementById('timer-black').classList.toggle('active', turn === 'black');
+        }
+    }
+
+    function tick() {
+        if (!gameActive || !gameStarted) return;
+        timers[turn]--; updateTimerUI();
+        if (timers[turn] <= 0) { 
+            const vencedor = turn === 'white' ? "PRETAS" : "BRANCAS";
+            finalizarJogo(vencedor, "O tempo do oponente acabou."); 
+        }
+    }
+
+    function updateTimerUI() {
+        ['white', 'black'].forEach(c => {
+            const t = timers[c]; 
+            const el = document.getElementById(`timer-${c}`);
+            if(el) el.innerText = `${Math.floor(t/60).toString().padStart(2,'0')}:${(t%60).toString().padStart(2,'0')}`;
+        });
+    }
+
+    function toggleMenu() {
+        document.getElementById('side-menu').classList.toggle('open');
+        document.getElementById('overlay').style.display = document.getElementById('side-menu').classList.contains('open') ? 'block' : 'none';
+    }
+
+    function desistir() { 
+        if (confirm("Deseja desistir?")) { 
+            const vencedor = turn === 'white' ? "PRETAS" : "BRANCAS";
+            finalizarJogo(vencedor, "O oponente abandonou a partida."); 
+        } 
+    }
+    init();
+</script>
+</body>
+</html>
