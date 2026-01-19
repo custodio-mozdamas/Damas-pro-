@@ -3,85 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Damas Pro Master - Firebase Edition</title>
+    <title>Damas Pro Master - Versão Mobile Final</title>
     <style>
         :root {
             --bg: #1a1a1a;
-            --panel: #252525;
             --board-dark: #769656;
             --board-light: #eeeed2;
             --white-p: radial-gradient(circle, #ffffff 30%, #cccccc 100%);
             --black-p: radial-gradient(circle, #444444 30%, #000000 100%);
             --accent: #2ecc71;
-            --danger: #e74c3c;
             --warning: #f1c40f;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+        /* IMPEDE COMPORTAMENTOS DO NAVEGADOR QUE TRAVAM O JOGO */
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            touch-action: none; 
+            user-select: none;
+        }
+
         body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
         #top-bar { background: #111; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; height: 50px; border-bottom: 1px solid #333; }
-        
-        #game-info { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px 15px; background: #222; height: 110px; }
-        .hud-top { display: flex; justify-content: space-between; font-size: 10px; color: #888; margin-bottom: 2px; font-weight: bold; }
+        #game-info { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px 15px; background: #222; }
         
         #board-wrapper { flex: 1; display: flex; align-items: center; justify-content: center; padding: 10px; position: relative; }
-        #board { width: min(90vw, 450px); height: min(90vw, 450px); display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); border: 4px solid #333; position: relative; }
+        #board { width: min(90vw, 450px); height: min(90vw, 450px); display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); border: 5px solid #333; position: relative; }
 
-        #lobby-overlay, #game-over-overlay { 
-            position: absolute; inset: 0; background: rgba(0,0,0,0.95); z-index: 100; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;
-        }
-        .hidden { display: none !important; }
-
-        .square { width: 100%; height: 100%; position: relative; display: flex; justify-content: center; align-items: center; }
+        .square { width: 100%; height: 100%; position: relative; display: flex; justify-content: center; align-items: center; cursor: pointer; }
         .dark-sq { background-color: var(--board-dark); }
         .light-sq { background-color: var(--board-light); }
-        .piece { position: absolute; width: 80%; height: 80%; border-radius: 50%; z-index: 2; box-shadow: 0 4px 4px rgba(0,0,0,0.4); pointer-events: none; }
+
+        /* PEÇAS COM POINTER-EVENTS NONE PARA O CLIQUE IR PRO QUADRADO */
+        .piece { 
+            position: absolute; width: 80%; height: 80%; border-radius: 50%; z-index: 2; 
+            box-shadow: 0 4px 4px rgba(0,0,0,0.4); pointer-events: none; 
+        }
         .white { background: var(--white-p); border: 1px solid #999; }
         .black { background: var(--black-p); border: 1px solid #333; }
         .king::after { content: '👑'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 20px; }
-        .selected { transform: scale(1.1); outline: 4px solid var(--warning); z-index: 10; }
-        .hint { position: absolute; width: 35%; height: 35%; background: rgba(0, 255, 0, 0.4); border-radius: 50%; z-index: 1; }
-
-        .timer { font-family: monospace; font-size: 1.6rem; background: #000; padding: 5px; text-align: center; border-radius: 4px; color: #444; border: 2px solid #333; }
-        .timer.active { color: var(--accent); border-color: var(--accent); }
-        #status-bar { grid-column: span 2; text-align: center; color: var(--warning); font-weight: bold; font-size: 0.9rem; }
         
-        .menu-btn { width: 100%; padding: 12px; background: var(--accent); color: black; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .selected { border: 4px solid var(--warning) !important; z-index: 10; box-shadow: 0 0 15px var(--warning); }
+        .hint { position: absolute; width: 30%; height: 30%; background: rgba(0, 255, 0, 0.5); border-radius: 50%; z-index: 1; pointer-events: none; }
+
+        .timer { font-family: monospace; font-size: 1.5rem; background: #000; padding: 5px; text-align: center; border-radius: 4px; color: #444; border: 2px solid #333; }
+        .timer.active { color: var(--accent); border-color: var(--accent); }
+        #status-bar { grid-column: span 2; text-align: center; color: var(--warning); font-weight: bold; font-size: 0.9rem; margin-top: 5px; }
+
+        #lobby-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .hidden { display: none !important; }
+        .menu-btn { padding: 15px 30px; background: var(--accent); color: black; border: none; border-radius: 5px; font-weight: bold; font-size: 1.2rem; }
     </style>
 </head>
 <body>
 
     <div id="top-bar">
-        <div style="font-weight: bold; color: var(--accent);">👑 DAMAS ONLINE</div>
-        <div style="font-size: 12px; color: #aaa;">Sincronizado via Firebase</div>
+        <div style="font-weight: bold; color: var(--accent);">👑 DAMAS PRO</div>
+        <div id="online-status" style="font-size: 12px; color: #aaa;">1 online</div>
     </div>
 
     <div id="game-info">
-        <div>
-            <div class="hud-top"><span>PRETAS</span> <span id="count-black">12</span></div>
-            <div id="timer-black" class="timer">05:00</div>
-        </div>
-        <div>
-            <div class="hud-top"><span>BRANCAS</span> <span id="count-white">12</span></div>
-            <div id="timer-white" class="timer active">05:00</div>
-        </div>
-        <div id="status-bar">CONECTANDO...</div>
+        <div><div id="timer-black" class="timer">05:00</div></div>
+        <div><div id="timer-white" class="timer active">05:00</div></div>
+        <div id="status-bar">Aguardando Início...</div>
     </div>
 
     <div id="board-wrapper">
         <div id="lobby-overlay">
-            <h2 style="color: var(--accent)">SALA DE ESPERA</h2>
-            <button class="menu-btn" onclick="window.iniciarLobby()">INICIAR PARTIDA</button>
+            <button class="menu-btn" onclick="window.iniciarLobby()">INICIAR JOGO</button>
         </div>
-
-        <div id="game-over-overlay" class="hidden">
-            <h2 id="winner-text" style="color: var(--accent)">VITÓRIA!</h2>
-            <p id="winner-msg"></p>
-            <button class="menu-btn" onclick="window.resetGame()">JOGAR NOVAMENTE</button>
-        </div>
-
         <div id="board"></div>
     </div>
 
@@ -109,10 +100,9 @@
     let legalMoves = [];
     let gameActive = false;
     let gameStarted = false;
-    let inMultiCapture = false;
     let timers = { white: 300, black: 300 };
 
-    // --- INICIALIZAÇÃO ---
+    // INICIALIZAÇÃO DO TABULEIRO
     window.init = function() {
         const boardEl = document.getElementById('board');
         boardEl.innerHTML = '';
@@ -124,105 +114,61 @@
                 const sq = document.createElement('div');
                 sq.className = `square ${(r+c)%2===0?'dark-sq':'light-sq'}`;
                 sq.id = `sq-${r}-${c}`;
-                sq.onclick = () => window.handleClick(r, c);
+                
+                // DETEÇÃO DE TOQUE MELHORADA
+                sq.addEventListener('pointerdown', (e) => {
+                    e.preventDefault();
+                    handleInteraction(r, c);
+                });
+                
                 boardEl.appendChild(sq);
             }
         }
     };
 
-    // --- LOGICA DE MOVIMENTO AVANÇADA ---
-    function getBestCaptures(r, c, b, depth = 0) {
-        const p = b[r][c]; if(!p) return [];
-        let moves = []; const dirs = [[1,1],[1,-1],[-1,1],[-1,-1]];
-        const range = p.king ? 7 : 1;
-        dirs.forEach(d => {
-            for (let i = 1; i <= range; i++) {
-                let vr = r + d[0]*i, vc = c + d[1]*i;
-                if (vr < 0 || vr >= 8 || vc < 0 || vc >= 8) break;
-                if (b[vr][vc]) {
-                    if (b[vr][vc].color === p.color) break;
-                    let lr = vr + d[0], lc = vc + d[1];
-                    while (lr >= 0 && lr < 8 && lc >= 0 && lc < 8 && !b[lr][lc]) {
-                        const nextB = b.map(row => row.map(cell => cell ? {...cell} : null));
-                        nextB[lr][lc] = {...p}; nextB[r][c] = null; nextB[vr][vc] = null;
-                        const sub = getBestCaptures(lr, lc, nextB, depth + 1);
-                        if (sub.length > 0) sub.forEach(sm => moves.push({ fr: r, fc: c, tr: lr, tc: lc, victim: {r:vr, c:vc}, totalCount: sm.totalCount }));
-                        else moves.push({ fr: r, fc: c, tr: lr, tc: lc, victim: {r:vr, c:vc}, totalCount: depth + 1 });
-                        if (!p.king) break;
-                        lr += d[0]; lc += d[1];
-                    }
-                    break;
-                }
-            }
-        });
-        return moves;
-    }
-
-    function getSimpleMoves() {
-        let moves = [];
-        for (let r = 0; r < 8; r++) {
-            for (let c = 0; c < 8; c++) {
-                const p = board[r][c];
-                if (p?.color === turn) {
-                    const dirs = p.king ? [[1,1],[1,-1],[-1,1],[-1,-1]] : (p.color === 'white' ? [[-1,1],[-1,-1]] : [[1,1],[1,-1]]);
-                    dirs.forEach(d => {
-                        let nr = r + d[0], nc = c + d[1];
-                        while (nr >= 0 && nr < 8 && nc >= 0 && nc < 8 && !board[nr][nc]) {
-                            moves.push({ fr: r, fc: c, tr: nr, tc: nc });
-                            if (!p.king) break;
-                            nr += d[0]; nc += d[1];
-                        }
-                    });
-                }
-            }
-        }
-        return moves;
-    }
-
-    window.handleClick = function(r, c) {
+    function handleInteraction(r, c) {
         if (!gameActive) return;
         const p = board[r][c];
-        if (p?.color === turn && !inMultiCapture) {
-            if (legalMoves.some(m => m.fr === r && m.fc === c)) selectedSq = { r, c };
-        } else if (selectedSq && !p) {
+
+        // Se tocar na peça da vez
+        if (p && p.color === turn) {
+            selectedSq = { r, c };
+        } 
+        // Se já selecionou e tocar num destino vazio
+        else if (selectedSq) {
             const move = legalMoves.find(m => m.fr === selectedSq.r && m.fc === selectedSq.c && m.tr === r && m.tc === c);
-            if (move) executeMove(move);
+            if (move) {
+                executeMove(move);
+            } else {
+                selectedSq = null; // Cancela seleção se tocar em lugar errado
+            }
         }
         render();
-    };
+    }
 
     function executeMove(move) {
         const p = board[move.fr][move.fc];
-        board[move.tr][move.tc] = p; board[move.fr][move.fc] = null;
+        board[move.tr][move.tc] = p;
+        board[move.fr][move.fc] = null;
         if (move.victim) board[move.victim.r][move.victim.c] = null;
-
-        if (move.totalCount > 1) {
-            inMultiCapture = true; selectedSq = { r: move.tr, c: move.tc };
-            const nextCaps = getBestCaptures(move.tr, move.tc, board);
-            legalMoves = nextCaps.filter(m => m.totalCount === move.totalCount - 1);
-        } else {
-            if (!p.king && ((p.color === 'white' && move.tr === 0) || (p.color === 'black' && move.tr === 7))) p.king = true;
-            inMultiCapture = false; turn = turn === 'white' ? 'black' : 'white';
-            selectedSq = null;
-        }
-        update(gameRef, { board, turn, inMultiCapture, selectedSq, timers });
+        
+        // Promoção a Dama
+        if (!p.king && ((p.color === 'white' && move.tr === 0) || (p.color === 'black' && move.tr === 7))) p.king = true;
+        
+        turn = turn === 'white' ? 'black' : 'white';
+        selectedSq = null;
+        update(gameRef, { board, turn, timers });
     }
 
-    // --- FIREBASE SYNC ---
+    // SINCRONIZAÇÃO FIREBASE
     onValue(gameRef, (snapshot) => {
         const data = snapshot.val();
-        if (!data || !data.board) {
-            window.init();
-            set(gameRef, { board, turn, timers, gameActive: false, gameStarted: false, inMultiCapture: false });
-            return;
-        }
+        if (!data) return;
         board = data.board;
         turn = data.turn;
-        timers = data.timers || {white:300, black:300};
+        timers = data.timers || {white: 300, black: 300};
         gameActive = data.gameActive;
         gameStarted = data.gameStarted;
-        inMultiCapture = data.inMultiCapture || false;
-        selectedSq = data.selectedSq || null;
 
         document.getElementById('lobby-overlay').classList.toggle('hidden', gameStarted);
         document.getElementById('status-bar').innerText = turn === 'white' ? "VEZ DAS BRANCAS" : "VEZ DAS PRETAS";
@@ -231,68 +177,74 @@
         render();
     });
 
+    // LÓGICA DE CAPTURA OBRIGATÓRIA
     function updateLogic() {
-        if (inMultiCapture) return; // Mantém as capturas sugeridas pelo executeMove
         let caps = [];
+        let normals = [];
         for (let r = 0; r < 8; r++) {
             for (let c = 0; c < 8; c++) {
-                if (board[r][c]?.color === turn) caps.push(...getBestCaptures(r, c, board));
+                const p = board[r][c];
+                if (p?.color !== turn) continue;
+                
+                const dirs = [[1,1],[1,-1],[-1,1],[-1,-1]];
+                dirs.forEach(d => {
+                    // Lógica de comer peça
+                    let vr = r+d[0], vc = c+d[1], tr = r+d[0]*2, tc = c+d[1]*2;
+                    if (tr>=0 && tr<8 && tc>=0 && tc<8) {
+                        if (board[vr][vc] && board[vr][vc].color !== turn && !board[tr][tc]) {
+                            caps.push({ fr:r, fc:c, tr, tc, victim: {r:vr, c:vc} });
+                        }
+                    }
+                    // Lógica de movimento simples
+                    let nr = r+d[0], nc = c+d[1];
+                    if (nr>=0 && nr<8 && nc>=0 && nc<8 && !board[nr][nc]) {
+                        if (p.king || (p.color==='white' && d[0]<0) || (p.color==='black' && d[0]>0)) {
+                            normals.push({ fr:r, fc:c, tr:nr, tc:nc });
+                        }
+                    }
+                });
             }
         }
-        if (caps.length > 0) {
-            const max = Math.max(...caps.map(m => m.totalCount));
-            legalMoves = caps.filter(m => m.totalCount === max);
-        } else {
-            legalMoves = getSimpleMoves();
-        }
-        
-        if(gameStarted && legalMoves.length === 0) {
-            const winner = turn === 'white' ? "PRETAS" : "BRANCAS";
-            document.getElementById('winner-text').innerText = `VITÓRIA DAS ${winner}!`;
-            document.getElementById('winner-msg').innerText = "O oponente não tem mais movimentos.";
-            document.getElementById('game-over-overlay').classList.remove('hidden');
-        }
+        // Regra: se pode comer, só pode fazer jogada de comer
+        legalMoves = caps.length > 0 ? caps : normals;
     }
 
     function render() {
-        let w=0, b=0;
         for (let r = 0; r < 8; r++) {
             for (let c = 0; c < 8; c++) {
                 const sq = document.getElementById(`sq-${r}-${c}`);
-                if(!sq) continue;
+                if (!sq) continue;
                 sq.innerHTML = '';
                 const p = board[r][c];
                 if (p) {
-                    p.color === 'white' ? w++ : b++;
                     const div = document.createElement('div');
                     div.className = `piece ${p.color} ${p.king ? 'king' : ''}`;
                     if (selectedSq?.r === r && selectedSq?.c === c) div.classList.add('selected');
                     sq.appendChild(div);
                 }
-                if (selectedSq && legalMoves.some(m => m.fr === selectedSq.r && m.fc === selectedSq.c && m.tr === r && m.tc === c)) {
-                    sq.innerHTML = '<div class="hint"></div>';
+                // Mostrar bolinhas verdes onde pode mover
+                if (selectedSq && legalMoves.some(m => m.fr===selectedSq.r && m.fc===selectedSq.c && m.tr===r && m.tc===c)) {
+                    const h = document.createElement('div');
+                    h.className = 'hint';
+                    sq.appendChild(h);
                 }
             }
         }
-        document.getElementById('count-white').innerText = w;
-        document.getElementById('count-black').innerText = b;
     }
 
     window.iniciarLobby = () => update(gameRef, { gameActive: true, gameStarted: true });
-    window.resetGame = () => set(gameRef, null).then(() => location.reload());
+    window.init();
 
+    // CRONÔMETRO
     setInterval(() => {
         if (!gameActive || !gameStarted) return;
         if (turn === 'white') timers.white--; else timers.black--;
-        const format = (s) => `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
-        document.getElementById('timer-white').innerText = format(timers.white);
-        document.getElementById('timer-black').innerText = format(timers.black);
+        const f = (s) => `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
+        document.getElementById('timer-white').innerText = f(timers.white);
+        document.getElementById('timer-black').innerText = f(timers.black);
         document.getElementById('timer-white').classList.toggle('active', turn === 'white');
         document.getElementById('timer-black').classList.toggle('active', turn === 'black');
     }, 1000);
-
-    window.init();
 </script>
 </body>
-    </html>
-    
+</html>
